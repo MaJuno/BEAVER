@@ -61,7 +61,13 @@ public class Script_Instance : GH_ScriptInstance
     {
         // <Custom code>
     
-
+        
+        //Create all wood bars
+        //Create all aggregate
+        //for 3n elements in stock
+        //Give instructions for aggregate building
+        //Create assembly
+        //Give instructions for aggregate assembly
      
         A = 0;
         B = 0;
@@ -73,17 +79,40 @@ public class Script_Instance : GH_ScriptInstance
     public class assembly
     {
         //Fields
+
+        //List of free spot : points
+        //List of non-free spot : points
+        //List of freedom degrees for each points : int
+        //List of aggregate
+
+
         //Constructor
         public assembly()
         {
 
         }
+        //public assembly(list<aggregate> aggregates)
+        //{
+        //this.ass_aggregate = aggregates;
+        //}
+
         //Methods
+
+        //A method to evaluate freedom degrees of existing aggregate
+        //A method to add an aggregate to the the assembly 
     }
 
     public class aggregate
     {
         //Fields
+
+        private List<elements> agg_listelement;
+        public List<elements> ListElements
+        {
+            get { return agg_listelement; }
+            set { agg_listelement = value; }
+        }
+
         private Point3d agg_initPos;
         public Point3d InitPos
         {
@@ -132,6 +161,7 @@ public class Script_Instance : GH_ScriptInstance
             get { return agg_yFsPos; }
             set { agg_yFsPos = value; }
         }
+
         private double agg_zFsPos;
         public double ZFsPos
         {
@@ -139,14 +169,8 @@ public class Script_Instance : GH_ScriptInstance
             set { agg_zFsPos = value; }
         }
 
-        private List<elements> agg_elements;
-        public List<elements> Elements
-        {
-            get { return agg_elements; }
-            set { agg_elements = value; }
-        }
+        
         //Constructor
-
         public aggregate()
         {
 
@@ -154,9 +178,15 @@ public class Script_Instance : GH_ScriptInstance
 
         public aggregate(List<elements> elements)
         {
-            this.elements = elements;
+            this.agg_listelement = elements;
         }
         //Methods
+
+        //A method to place element along x,y,z axis
+
+        //A method to get information from the elements
+
+        //A method to give building instruction of the aggregate
 
     }
 
@@ -226,6 +256,7 @@ public class Script_Instance : GH_ScriptInstance
         
         //Methods
 
+        //A method to create 3D geometries which represents wood bars
 
     }
 
@@ -245,6 +276,13 @@ public class Script_Instance : GH_ScriptInstance
         return toMin + (val - fromMin) * (toMax - toMin) / (fromMax - fromMin);
     }
 
+    /// <summary>
+    /// This function compute the volume of a bar
+    /// </summary>
+    /// <param name="l"></param>
+    /// <param name="w"></param>
+    /// <param name="t"></param>
+    /// <returns></returns>
     public double Volume(double l, double w, double t)
     {
         return l * w * t;

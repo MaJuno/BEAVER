@@ -26,7 +26,7 @@ namespace BEAVER
             get
             {
                 //Return a short string describing the purpose of this GHA library.
-                return "";
+                return "Beaver is, with human, the only known mammal to transform deeply its environment with aim at enhancing and enasuring its life ";
             }
         }
         public override Guid Id
@@ -42,7 +42,7 @@ namespace BEAVER
             get
             {
                 //Return a string identifying you or your company.
-                return "";
+                return "Matthieu Brossette";
             }
         }
         public override string AuthorContact
@@ -50,7 +50,7 @@ namespace BEAVER
             get
             {
                 //Return a string representing your preferred contact details.
-                return "";
+                return "matthieu@atelierjuno.com";
             }
         }
     }
