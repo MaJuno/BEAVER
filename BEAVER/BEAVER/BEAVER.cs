@@ -57,11 +57,17 @@ public class Script_Instance : GH_ScriptInstance
     /// Output parameters as ref arguments. You don't have to assign output parameters, 
     /// they will have a default value.
     /// </summary>
-    private void RunScript(List<Point3d> _p, List<int> _id, List<double> _l, List<double> _w, List<double> _t, ref object A, ref object B, ref object C)
+    private void RunScript(Point3d _p, int _id, double _l, double _w, double _t, ref object A, ref object B, ref object C, ref object D)
     {
         // <Custom code>
-    
-        
+
+        elements bars = new elements(_id, _l, _w, _t);
+
+        double volume = bars.Volume;
+        Box bar3d = bars.Box;
+        aggregate agg = new aggregate(bars);
+        int id = bars.Id;
+
         //Create all wood bars
         //Create all aggregate
         //for 3n elements in stock
@@ -69,9 +75,10 @@ public class Script_Instance : GH_ScriptInstance
         //Create assembly
         //Give instructions for aggregate assembly
      
-        A = 0;
-        B = 0;
-        C = 0;
+        A = volume;
+        B = bar3d;
+        C = agg;
+        D = bars;
         // </Custom code>
     }
 
@@ -80,8 +87,26 @@ public class Script_Instance : GH_ScriptInstance
     {
         //Fields
 
-        //List of free spot : points
-        //List of non-free spot : points
+        private List<Point3d> ass_fSpot;
+        public List<Point3d> fSpot
+        {
+            get { return ass_fSpot; }
+            set { ass_fSpot = value; }
+        }
+
+        private List<Point3d> ass_nfSpot;
+        public List<Point3d> nfSpot
+        {
+            get { return ass_nfSpot; }
+            set { ass_nfSpot = value; }
+        }
+
+        private List<int> ass_Dof;
+        public List<int> Dof
+        {
+            get { return ass_Dof; }
+            set { ass_Dof = value; }
+        }
         //List of freedom degrees for each points : int
         //List of aggregate
 
@@ -106,8 +131,8 @@ public class Script_Instance : GH_ScriptInstance
     {
         //Fields
 
-        private List<elements> agg_listelement;
-        public List<elements> ListElements
+        private List<List<elements>> agg_listelement;
+        public List<List<elements>> ListElements
         {
             get { return agg_listelement; }
             set { agg_listelement = value; }
@@ -176,17 +201,41 @@ public class Script_Instance : GH_ScriptInstance
 
         }
 
-        public aggregate(List<elements> elements)
+        public aggregate(elements elements)
         {
-            this.agg_listelement = elements;
+            this.ListElements = Aggregation (elements);
         }
+
+
         //Methods
 
         //A method to place element along x,y,z axis
-
+        
         //A method to get information from the elements
 
         //A method to give building instruction of the aggregate
+
+        public List<List<elements>> Aggregation (elements element)
+        {
+            elements[] elements = { element };
+            List<elements> listA = new List<elements>(elements);
+            List<elements> listB = new List<elements>();
+            List<List<elements>> ListC = new List<List<elements>>();
+            for (int i=0; i < listA.Count; i++)
+            {
+                if (listB.Count < 3)
+                {
+                    listB.Add(listA[0]);
+                    listA.RemoveAt(0);
+                }
+                else
+                {
+                    ListC.Add(listB);
+                    listB.Clear();
+                }
+            }
+            return ListC;
+        }
 
     }
 
@@ -200,42 +249,40 @@ public class Script_Instance : GH_ScriptInstance
             get { return ele_Id; }
             set { ele_Id = value; }
         }
-        private double ele_length;
+
+        private double ele_Length;
         public double Length
         {
-            get { return ele_length; }
-            set { ele_length = value; }
+            get { return ele_Length; }
+            set { ele_Length = value; }
         }
-        private double ele_width;
+
+        private double ele_Width;
         public double Width
         {
-            get { return ele_width; }
-            set { ele_width = value; }
+            get { return ele_Width; }
+            set { ele_Width = value; }
         }
-        private double ele_thickness;
+
+        private double ele_Thickness;
         public double Thickness
         {
-            get { return ele_thickness; }
-            set { ele_thickness = value; }
+            get { return ele_Thickness; }
+            set { ele_Thickness = value; }
         }
-        
-        private double ele_Pos;
-        public double XPos
+
+        private double ele_Volume;
+        public double Volume
         {
-            get { return ele_Pos; }
-            set { ele_Pos = value; }
+            get { return ele_Volume; }
+            set { ele_Volume = value; }
         }
-        private double ele_yPos;
-        public double YPos
+
+        private Box ele_Box;
+        public Box Box
         {
-            get { return ele_yPos; }
-            set { ele_yPos = value; }
-        }
-        private double ele_zPos;
-        public double ZPos
-        {
-            get { return ele_zPos; }
-            set { ele_zPos = value; }
+            get { return ele_Box; }
+            set { ele_Box = value; }
         }
 
         
@@ -251,19 +298,32 @@ public class Script_Instance : GH_ScriptInstance
             this.Length = l;
             this.Width = w;
             this.Thickness = t;
+            this.Box = Bars(Length, Width, Thickness);
+            this.Volume = Box.Volume;
         }
 
-        
+
         //Methods
 
-        //A method to create 3D geometries which represents wood bars
+        /// <summary>
+        /// This function create 3D geometry representing the bar
+        /// </summary>
+        public Box Bars(double l, double w, double t)
+        {
+            Interval lInterval = new Interval(0, l);
+            Interval wInterval = new Interval(0, w);
+            Interval tInterval = new Interval(0, t);
+            Rhino.Geometry.Plane pPlane = new Plane(1, 0, 0, 0);
+            Rhino.Geometry.Box box = new Box(pPlane, lInterval, wInterval, tInterval);
+            return box;
+        }
 
     }
 
     // utilities functions
 
     /// <summary>
-    /// This Function maps a value from a source domain to a destination domain
+    /// This Function maps a value from a source domain to a destination domain. Written by Alessio Erioli from Co-De-It
     /// </summary>
     /// <param name="val">the value</param>
     /// <param name="fromMin">low value of source domain</param>
@@ -277,20 +337,17 @@ public class Script_Instance : GH_ScriptInstance
     }
 
     /// <summary>
-    /// This function compute the volume of a bar
+    /// This function intend to vizualise wood bars stock.
     /// </summary>
-    /// <param name="l"></param>
-    /// <param name="w"></param>
-    /// <param name="t"></param>
-    /// <returns></returns>
-    public double Volume(double l, double w, double t)
-    {
-        return l * w * t;
-    }
 
-    // </Custom additional code> 
+    ///<summary> This function intend to compare list and order one according to the other.
+    ///
+    /// </summary>
 
-    private List<string> __err = new List<string>(); //Do not modify this list directly.
+
+    // </Custom additional code>    
+
+  private List<string> __err = new List<string>(); //Do not modify this list directly.
   private List<string> __out = new List<string>(); //Do not modify this list directly.
   private RhinoDoc doc = RhinoDoc.ActiveDoc;       //Legacy field.
   private IGH_ActiveObject owner;                  //Legacy field.

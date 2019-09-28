@@ -58,7 +58,6 @@
   <ItemGroup>
     <Compile Include="BEAVER.cs" />
     <Compile Include="BEAVERInfo.cs" />
-    <Compile Include="BEAVER_aggcomponent.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

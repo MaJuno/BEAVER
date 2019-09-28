@@ -10,7 +10,7 @@ namespace BEAVER
         {
             get
             {
-                return "Aggregate";
+                return "Beaver";
             }
         }
         public override Bitmap Icon
@@ -26,7 +26,7 @@ namespace BEAVER
             get
             {
                 //Return a short string describing the purpose of this GHA library.
-                return "Beaver is, with human, the only known mammal to transform deeply its environment with aim at enhancing and enasuring its life ";
+                return "Beaver is, with human, the only known mammal to transform deeply its environment with aim at enhancing and enasuring its life and survival ";
             }
         }
         public override Guid Id
