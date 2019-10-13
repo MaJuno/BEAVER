@@ -1,7 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-
+using System.Linq;
+using System.Windows.Forms;
 using Rhino;
 using Rhino.Geometry;
 
@@ -11,6 +12,8 @@ using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 
 // <Custom using>
+
+using System.Linq;
 
 // </Custom using>
 
@@ -57,64 +60,103 @@ public class Script_Instance : GH_ScriptInstance
     /// Output parameters as ref arguments. You don't have to assign output parameters, 
     /// they will have a default value.
     /// </summary>
-    private void RunScript(Point3d _p, int _id, double _l, double _w, double _t, ref object A, ref object B, ref object C, ref object D)
+    private void RunScript(Point3d _p, List<int> _id, List<double> _l, List<double> _w, List<double> _t, ref object A, ref object B, ref object C, ref object D, ref object E)
     {
         // <Custom code>
 
-        elements bars = new elements(_id, _l, _w, _t);
+        IList<int> ID = new List<int>(_id);
+        IList<double> L = new List<double>(_l);
+        IList<double> W = new List<double>(_w);
+        IList<double> T = new List<double>(_t);
+        int IDLength = ID.Count;
 
-        double volume = bars.Volume;
-        Box bar3d = bars.Box;
-        aggregate agg = new aggregate(bars);
-        int id = bars.Id;
+        List<element> bars = new List<element>();
+        for (int i = 0; i < IDLength; i+=1)
+        {
+            element bar = new element(ID[i], L[i], W[i], T[i]);
+            bars.Add(bar);
+        }
 
-        //Create all wood bars
-        //Create all aggregate
-        //for 3n elements in stock
-        //Give instructions for aggregate building
-        //Create assembly
-        //Give instructions for aggregate assembly
-     
-        A = volume;
-        B = bar3d;
-        C = agg;
-        D = bars;
+        List<double> barsVolumes = new List<double>();
+        for (int i = 0; i < IDLength; i++)
+        {
+            double volume = bars.ElementAt(i).Volume;
+            barsVolumes.Add(volume);
+        }
+
+
+        IList<element> barList = bars;
+
+        barList.OrderBy(i => barsVolumes);
+
+        IList<int> orderedID = new List<int>();
+            for (int i = 0; i<IDLength ;i++)
+        {
+            int id = bars.ElementAt(i).Id;
+            orderedID.Add(id);
+        }
+
+        IList<aggregate> aggregateList = new List<aggregate>();
+        
+        
+        for (int i = 0; i < IDLength-1; i+=3)
+        {
+            aggregate agg = new aggregate(barList, i);
+            aggregateList.Add(agg);
+        }
+
+        IList<string> aggNameList = new List<string>();
+        for (int i = 0; i<aggregateList.Count ; i++ )
+        {
+            aggNameList.Add(aggregateList.ElementAt(i).Name);
+        }
+
+        A = bars.Count;
+        B = IDLength;
+        C = aggregateList;
+        D = barsVolumes;
+        E = aggNameList;
+
         // </Custom code>
     }
 
+
+
+
+}
+
     // <Custom additional code> 
-    public class assembly
+    public class Assembly
     {
         //Fields
 
-        private List<Point3d> ass_fSpot;
-        public List<Point3d> fSpot
+        private List<Point3d> _assFSpot;
+        public List<Point3d> FSpot
         {
-            get { return ass_fSpot; }
-            set { ass_fSpot = value; }
+            get { return _assFSpot; }
+            set { _assFSpot = value; }
         }
 
-        private List<Point3d> ass_nfSpot;
-        public List<Point3d> nfSpot
+        private List<Point3d> _assNfSpot;
+        public List<Point3d> NfSpot
         {
-            get { return ass_nfSpot; }
-            set { ass_nfSpot = value; }
+            get { return _assNfSpot; }
+            set { _assNfSpot = value; }
         }
 
-        private List<int> ass_Dof;
+        private List<int> _assDof;
         public List<int> Dof
         {
-            get { return ass_Dof; }
-            set { ass_Dof = value; }
+            get { return _assDof; }
+            set { _assDof = value; }
         }
         //List of freedom degrees for each points : int
         //List of aggregate
 
-
         //Constructor
-        public assembly()
+        public Assembly()
         {
-
+            
         }
         //public assembly(list<aggregate> aggregates)
         //{
@@ -128,226 +170,225 @@ public class Script_Instance : GH_ScriptInstance
     }
 
     public class aggregate
+{
+    //Fields
+
+    private element[] agg_Arrelements;
+    public element[] ArrElements
     {
-        //Fields
+        get { return agg_Arrelements; }
+        set { agg_Arrelements = value; }
+    }
 
-        private List<List<elements>> agg_listelement;
-        public List<List<elements>> ListElements
-        {
-            get { return agg_listelement; }
-            set { agg_listelement = value; }
-        }
+    private Point3d agg_initPos;
+    public Point3d InitPos
+    {
+        get { return agg_initPos; }
+        set { agg_initPos = value; }
+    }
 
-        private Point3d agg_initPos;
-        public Point3d InitPos
-        {
-            get { return agg_initPos; }
-            set { agg_initPos = value; }
-        }
+    private string agg_name;
+    public string Name
+    {
+        get { return agg_name; }
+        set { agg_name = value; }
+    }
 
-        private string agg_name;
-        public string Name
-        {
-            get { return agg_name; }
-            set { agg_name = value; }
-        }
+    private int _aggXFreedom;
+    public int XFreedom
+    {
+        get { return _aggXFreedom; }
+        set { _aggXFreedom = 3; }
+    }
 
-        private int agg_xFreedom;
-        public int XFreedom
-        {
-            get { return agg_xFreedom; }
-            set { agg_xFreedom = value; }
-        }
+    private int _aggYFreedom;
+    public int YFreedom
+    {
+        get { return _aggYFreedom; }
+        set { _aggYFreedom = 3; }
+    }
 
-        private int agg_yFreedom;
-        public int YFreedom
-        {
-            get { return agg_yFreedom; }
-            set { agg_yFreedom = value; }
-        }
+    private int _aggZFreedom;
+    public int ZFreedom
+    {
+        get { return _aggZFreedom; }
+        set { _aggZFreedom = 3; }
+    }
 
-        private int agg_zFreedom;
-        public int ZFreedom
-        {
-            get { return agg_zFreedom; }
-            set { agg_zFreedom = value; }
-        }
+    private double _aggXFsPos;
+    public double XFsPos
+    {
+        get { return _aggXFsPos; }
+        set { _aggXFsPos = value; }
+    }
 
-        private double agg_xFsPos;
-        public double XFsPos
-        {
-            get { return agg_xFsPos; }
-            set { agg_xFsPos = value; }
-        }
+    private double _aggYFsPos;
+    public double YFsPos
+    {
+        get { return _aggYFsPos; }
+        set { _aggYFsPos = value; }
+    }
 
-        private double agg_yFsPos;
-        public double YFsPos
-        {
-            get { return agg_yFsPos; }
-            set { agg_yFsPos = value; }
-        }
-
-        private double agg_zFsPos;
-        public double ZFsPos
-        {
-            get { return agg_zFsPos; }
-            set { agg_zFsPos = value; }
-        }
-
-        
-        //Constructor
-        public aggregate()
-        {
-
-        }
-
-        public aggregate(elements elements)
-        {
-            this.ListElements = Aggregation (elements);
-        }
+    private double _aggZFsPos;
+    public double ZFsPos
+    {
+        get { return _aggZFsPos; }
+        set { _aggZFsPos = value; }
+    }
 
 
-        //Methods
-
-        //A method to place element along x,y,z axis
-        
-        //A method to get information from the elements
-
-        //A method to give building instruction of the aggregate
-
-        public List<List<elements>> Aggregation (elements element)
-        {
-            elements[] elements = { element };
-            List<elements> listA = new List<elements>(elements);
-            List<elements> listB = new List<elements>();
-            List<List<elements>> ListC = new List<List<elements>>();
-            for (int i=0; i < listA.Count; i++)
-            {
-                if (listB.Count < 3)
-                {
-                    listB.Add(listA[0]);
-                    listA.RemoveAt(0);
-                }
-                else
-                {
-                    ListC.Add(listB);
-                    listB.Clear();
-                }
-            }
-            return ListC;
-        }
+    //Constructor
+    public aggregate()
+    {
 
     }
 
-    public class elements
+    public aggregate(IList<element> elements, int i)
     {
-        //Fields 
-
-        private int ele_Id;
-        public int Id
-        {
-            get { return ele_Id; }
-            set { ele_Id = value; }
-        }
-
-        private double ele_Length;
-        public double Length
-        {
-            get { return ele_Length; }
-            set { ele_Length = value; }
-        }
-
-        private double ele_Width;
-        public double Width
-        {
-            get { return ele_Width; }
-            set { ele_Width = value; }
-        }
-
-        private double ele_Thickness;
-        public double Thickness
-        {
-            get { return ele_Thickness; }
-            set { ele_Thickness = value; }
-        }
-
-        private double ele_Volume;
-        public double Volume
-        {
-            get { return ele_Volume; }
-            set { ele_Volume = value; }
-        }
-
-        private Box ele_Box;
-        public Box Box
-        {
-            get { return ele_Box; }
-            set { ele_Box = value; }
-        }
-
+        this.ArrElements = Aggregation(elements, i);
+        this.Name = "agg_" + i/3;
         
-        //Constructor
-        public elements()
-        {
-
-        }
-
-        public elements(int id, double l, double w, double t)
-        {
-            this.Id = id;
-            this.Length = l;
-            this.Width = w;
-            this.Thickness = t;
-            this.Box = Bars(Length, Width, Thickness);
-            this.Volume = Box.Volume;
-        }
+    }
 
 
-        //Methods
+    //Methods
 
-        /// <summary>
-        /// This function create 3D geometry representing the bar
-        /// </summary>
-        public Box Bars(double l, double w, double t)
-        {
-            Interval lInterval = new Interval(0, l);
-            Interval wInterval = new Interval(0, w);
-            Interval tInterval = new Interval(0, t);
-            Rhino.Geometry.Plane pPlane = new Plane(1, 0, 0, 0);
-            Rhino.Geometry.Box box = new Box(pPlane, lInterval, wInterval, tInterval);
-            return box;
-        }
+    public element[] Aggregation(IList<element> element, int i)
+    {
+        element[] arrelements = new element[3] { element[i], element[i + 1], element[i + 2] };
+        return arrelements;
+    }
+
+    //A method to place element along x,y,z axis
+
+    //A method to get information from the elements
+
+    //A method to give building instruction of the aggregate
+
+
+
+
+    
+}
+/// <summary> Nested Class elements
+/// Nested Class elements
+/// </summary>
+public class element
+{
+    //Fields 
+
+    private int ele_Id;
+    public int Id
+    {
+        get { return ele_Id; }
+        set { ele_Id = value; }
+    }
+
+    private double ele_Length;
+    public double Length
+    {
+        get { return ele_Length; }
+        set { ele_Length = value; }
+    }
+
+    private double ele_Width;
+    public double Width
+    {
+        get { return ele_Width; }
+        set { ele_Width = value; }
+    }
+
+    private double ele_Thickness;
+    public double Thickness
+    {
+        get { return ele_Thickness; }
+        set { ele_Thickness = value; }
+    }
+
+    private double ele_Volume;
+    public double Volume
+    {
+        get { return ele_Volume; }
+        set { ele_Volume = value; }
+    }
+
+    private int ele_Orientation;
+    public int Orientation
+    {
+        get { return ele_Orientation; }
+        set { ele_Orientation = value; }
+    }
+
+    private Box ele_Box;
+    public Box Box
+    {
+        get { return ele_Box; }
+        set { ele_Box = value; }
+    }
+
+
+    //Constructor
+    public element()
+    {
 
     }
 
-    // utilities functions
+    public element(int id, double l, double w, double t)
+    {
+        this.Id = id;
+        this.Length = l;
+        this.Width = w;
+        this.Thickness = t;
+        this.Box = Bars(Length, Width, Thickness);
+        this.Volume = Box.Volume;
+    }
+
+
+    //Methods
 
     /// <summary>
-    /// This Function maps a value from a source domain to a destination domain. Written by Alessio Erioli from Co-De-It
+    /// This function create 3D geometry representing the bar
     /// </summary>
-    /// <param name="val">the value</param>
-    /// <param name="fromMin">low value of source domain</param>
-    /// <param name="fromMax">high value of source domain</param>
-    /// <param name="toMin">low value of destination domain</param>
-    /// <param name="toMax">high value of destination domain</param>
-    /// <returns>the remapped value</returns>
-    public double Map(double val, double fromMin, double fromMax, double toMin, double toMax)
+    public Box Bars(double l, double w, double t)
     {
-        return toMin + (val - fromMin) * (toMax - toMin) / (fromMax - fromMin);
+        Interval lInterval = new Interval(0, l);
+        Interval wInterval = new Interval(0, w);
+        Interval tInterval = new Interval(0, t);
+        Rhino.Geometry.Plane pPlane = new Plane(1, 0, 0, 0);
+        Rhino.Geometry.Box box = new Box(pPlane, lInterval, wInterval, tInterval);
+        return box;
     }
 
-    /// <summary>
-    /// This function intend to vizualise wood bars stock.
-    /// </summary>
+}
+// utilities functions
 
-    ///<summary> This function intend to compare list and order one according to the other.
-    ///
-    /// </summary>
+/// <summary>
+/// This Function maps a value from a source domain to a destination domain. Written by Alessio Erioli from Co-De-It
+/// </summary>
+/// <param name="val">the value</param>
+/// <param name="fromMin">low value of source domain</param>
+/// <param name="fromMax">high value of source domain</param>
+/// <param name="toMin">low value of destination domain</param>
+/// <param name="toMax">high value of destination domain</param>
+/// <returns>the remapped value</returns>
+//public double Map(double val, double fromMin, double fromMax, double toMin, double toMax)
+//{
+//    return toMin + (val - fromMin) * (toMax - toMin) / (fromMax - fromMin);
+//}
+
+/// <summary>
+/// This function intend to vizualise wood bars stock.
+/// </summary>
+
+///<summary> This function intend to compare list and order one according to the other.
+///
+/// </summary>
 
 
-    // </Custom additional code>    
 
-  private List<string> __err = new List<string>(); //Do not modify this list directly.
+// </Custom additional code>    
+
+private List<string> __err = new List<string>(); //Do not modify this list directly.
   private List<string> __out = new List<string>(); //Do not modify this list directly.
   private RhinoDoc doc = RhinoDoc.ActiveDoc;       //Legacy field.
   private IGH_ActiveObject owner;                  //Legacy field.

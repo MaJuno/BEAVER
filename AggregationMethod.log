@@ -1,0 +1,35 @@
+	public List<List<elements>> Aggregation (elements element)
+        {
+            elements[] elements = { element };
+            List<elements> listA = new List<elements>(elements);
+            List<elements> listB = new List<elements>();
+            List<List<elements>> ListC = new List<List<elements>>();
+            for (int i=0; i < listA.Count; i++)
+            {
+                if (listB.Count < 3)
+                {
+                    listB.Add(listA[0]);
+                    if (listB.Count == 1)
+                    {
+                        listB[0].Orientation = 'X';
+                    }
+                    else if (listB.Count == 2)
+                    {
+                        listB[1].Orientation = 'Y';
+                    }
+
+                    else
+                    {
+                        listB[2].Orientation = 'Z';
+                    }
+                    listA.RemoveAt(0);
+                    
+                }
+                else
+                {
+                    ListC.Add(listB);
+                    listB.Clear();
+                }
+            }
+            return ListC;
+        }
