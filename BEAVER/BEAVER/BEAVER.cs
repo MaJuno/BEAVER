@@ -133,35 +133,30 @@ public class Script_Instance : GH_ScriptInstance
         Assembly assembly = new Assembly();
         assembly.Orientation = assembly.OrientationList(aggregateList);
         assembly.AggL = aggregateList;
-        assembly.AssAggL = assembly.ListAssembly(assembly.AggL, assembly.Orientation);
+        assembly.AssAggL = assembly.ListAssembly(assembly.AggL);
 
-        IList<Point3d> p = new List<Point3d>();
-
-        for (int i = 0; i < aggregateList.Count; i++)
+        IList<Point3d> pL = new List<Point3d>();
+        for (int i = 0; i < assembly.AssAggL.Count;i++)
         {
-            Point3d p1 = assembly.NewOrigin(aggregateList, assembly.Orientation.ElementAt(i), i).ElementAt(0);
-            Point3d p2 = assembly.NewOrigin(aggregateList, assembly.Orientation.ElementAt(i), i).ElementAt(1);
-            p.Add(p1);
-            p.Add(p2);
+            pL.Add(assembly.AssAggL.ElementAt(i).Origin);
         }
-
 
 
         List<Mesh> assemblyMesh = new List<Mesh>();
-        for (int i = 1; i < assembly.AggL.Count; i++)
+        for (int i = 1; i < assembly.AssAggL.Count; i++)
         {
-            Mesh movedMesh = assembly.AggL.ElementAt(i).AggMesh;
-            movedMesh.Translate(p.ElementAt(i).X, p.ElementAt(i).Y, p.ElementAt(i).Z);
+            Mesh movedMesh = assembly.AssAggL.ElementAt(i).AggMesh;
+            movedMesh.Translate(pL.ElementAt(i).X, pL.ElementAt(i).Y, pL.ElementAt(i).Z);
             assemblyMesh.Add(movedMesh);
         }
 
-        //Give assembly Id
-        List<string> assemblyId = new List<string>();
-        for (int i = 0; i < assembly.AggL.Count; i++)
-        {
-            String AggId = assembly.AggL.ElementAt(i).AggName;
-            assemblyId.Add(AggId);
-        }
+        //Give aggregate Id
+        //List<string> assemblyId = new List<string>();
+        //for (int i = 0; i < assembly.AggL.Count; i++)
+        //{
+        //    String AggId = assembly.AggL.ElementAt(i).AggName;
+        //    assemblyId.Add(AggId);
+        //}
 
         //Create the instruction to assemble Aggregate
         //List<String> AggInstructionsList = new List<String>();
@@ -177,8 +172,8 @@ public class Script_Instance : GH_ScriptInstance
         B = assemblyMesh;
         C = aggregateList.Count;
         D = aggregateList;
-        E = p;
-        F = assemblyId;
+        E = pL;
+        F = "assemblyId";
 
         // </Custom code>
     }
@@ -240,9 +235,7 @@ public class Assembly
     //Constructor
     public Assembly()
         {
-        
         }
-
 
     //Methods
 
@@ -261,7 +254,18 @@ public class Assembly
         return orientationList;
     }
 
-    /// <summary>Displacment Vector :
+    public IList<string> AssemblyInstruction(IList<Aggregate> listagg, int index)
+    {
+        IList<String> Instruction = new List<string>
+        {
+        listagg.ElementAt(index).AggName,
+        listagg.ElementAt(listagg.Count - 2).AggName,
+        listagg.ElementAt(listagg.Count - 1).AggName
+        };
+        return Instruction;
+    }
+
+    /// <summary>NewOrigin:
     /// This method find the relative vector for each Aggregate to be moved to its correct position in the assembly
     /// </summary>
     /// <param name="agg1"></param>
@@ -304,36 +308,97 @@ public class Assembly
         Vector3d v3 = new Vector3d(agg2Freespot.X - agg2Origin.X, agg2Freespot.Y - agg2Origin.Y, agg2Freespot.Z - agg2Origin.Z);
         Vector3d v4 = new Vector3d(agg3Freespot.X - agg3Origin.X, agg3Freespot.Y - agg3Origin.Y, agg3Freespot.Z - agg3Origin.Z);
 
-        //Vector3d vector3D1 = new Vector3d(v1.X + v2.X + v3.X, v1.Y + v2.Y + v3.Y, v1.Z + v2.Z + v3.Z);
-        agg1Origin = new Point3d(v1.X + v2.X + v3.X, v1.Y + v2.Y + v3.Y, v1.Z + v2.Z + v3.Z);
-        agg2Origin = new Point3d(v1.X + v2.X + v4.X, v1.Y + v2.Y + v4.Y, v1. Z + v2.Z + v4.Z);
-        //Vector3d vector3D2 = new Vector3d(v1.X + v2.X + v4.X, v1.Y + v2.Y + v4.Y, v1.Z + v2.Z + v4.Z);
+        Vector3d vA1 = v1 + v2 + v3;
+        Vector3d vA2 = v1 + v2 + v4;
+
+        agg1Origin = origin + vA1;
+        agg2Origin = origin + vA2;
 
         pList.Add(agg1Origin);
         pList.Add(agg2Origin);
         return pList;
     }
 
-    public IList<Aggregate> ListAssembly (IList<Aggregate> AggregateList, IList<char> OrientationList)
+    public IList<Aggregate> ListAssembly(IList<Aggregate> AggregateList)
     {
-        IList<Aggregate> aggregates = AggregateList;
         IList<Aggregate> listAssembly = new List<Aggregate>
         {
-            aggregates.ElementAt(0)
+            AggregateList.ElementAt(0)
         };
-        
-        for (int i = 0; i<aggregates.Count; i+=2 )
+        IList<Point3d> Origin = new List<Point3d>();
+        IList<char> OrientationList = new List<char>
         {
-            listAssembly.Add(aggregates.ElementAt(i));
-            listAssembly.Add(aggregates.ElementAt(i+1));
-            IList<Point3d> p = NewOrigin(listAssembly, OrientationList.ElementAt(i), i);
-                
-            Point3d p1 = p.ElementAt(p.Count-2);
-            Point3d p2 = p.ElementAt(p.Count-1);
-                
-            listAssembly.ElementAt(listAssembly.Count - 2).Origin = p1;
-            listAssembly.ElementAt(listAssembly.Count - 1).Origin = p2;
+            listAssembly.ElementAt(0).ArrElements.ElementAt(0).Orientation,
+            listAssembly.ElementAt(0).ArrElements.ElementAt(1).Orientation,
+            listAssembly.ElementAt(0).ArrElements.ElementAt(2).Orientation
+        };
+        IList<int> step = new List<int>
+        {
+            3
+        };
 
+        for (int i = 1; i<5; i++)
+        {
+            step.Add(step.ElementAt(i-1) * 2);
+
+            int j = step.ElementAt(i - 1) ;
+            if (j >= AggregateList.Count)
+            {
+                break;
+            }
+            while (j < step.ElementAt(i-1)+step.ElementAt(i))
+            {
+
+                int k = (j -2) / 2;
+                
+                if(k>=OrientationList.Count)
+                {
+                    break;
+                }
+
+                listAssembly.Add(AggregateList.ElementAt(j));
+                listAssembly.Add(AggregateList.ElementAt(j + 1));
+
+                IList<Point3d> p = NewOrigin(listAssembly, OrientationList.ElementAt(k), k);
+
+                Origin.Add(p.ElementAt(0));
+                Origin.Add(p.ElementAt(1));
+
+                if (OrientationList.ElementAt(k) == 'X')
+                {
+                    OrientationList.Add('Y');
+                    OrientationList.Add('Z');
+                }
+                else if (OrientationList.ElementAt(k) == 'Y')
+                {
+                    OrientationList.Add('Z');
+                    OrientationList.Add('X');
+                }
+                else
+                {
+                    OrientationList.Add('X');
+                    OrientationList.Add('Y');
+                }
+
+                j += 2;
+            }
+            if (Origin.Count > AggregateList.Count)
+            {
+                break;
+            }
+        }
+
+        for (int i = 0; i <AggregateList.Count; i++)
+        {
+            if (i>=listAssembly.Count)
+            {
+                break;
+            }
+            else if (i>= Origin.Count)
+            {
+                break;
+            }
+            listAssembly.ElementAt(i).Origin = Origin.ElementAt(i);
         }
         return listAssembly;
     }
@@ -450,7 +515,6 @@ public class Aggregate
     }
 
     //Constructor
-    
 
     public Aggregate(IList<element> elements, int i, ref Point3d origin)
     {
@@ -556,7 +620,7 @@ public class Aggregate
     {
         Point3d Fspot = new Point3d();
         Fspot.X = origin.X;
-        Fspot.Y = element.Length * 0.5+origin.Y;
+        Fspot.Y = element.Length * 0.5 + origin.Y;
         Fspot.Z = origin.Z;
 
         return Fspot;
@@ -567,7 +631,7 @@ public class Aggregate
         Point3d Fspot = new Point3d();
         Fspot.X = origin.X;
         Fspot.Y = origin.Y;
-        Fspot.Z = element.Length * 0.5+origin.Z;
+        Fspot.Z = element.Length * 0.5 + origin.Z;
 
 
         return Fspot;
