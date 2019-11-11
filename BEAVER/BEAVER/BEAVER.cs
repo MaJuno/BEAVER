@@ -322,7 +322,7 @@ public class Assembly
             aggregates.ElementAt(0)
         };
         
-        for (int i = 1; i<aggregates.Count; )
+        for (int i = 0; i<aggregates.Count; i+=2 )
         {
             listAssembly.Add(aggregates.ElementAt(i));
             listAssembly.Add(aggregates.ElementAt(i+1));
