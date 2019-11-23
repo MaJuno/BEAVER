@@ -399,6 +399,12 @@ public class Assembly
                 break;
             }
             listAssembly.ElementAt(i).Origin = Origin.ElementAt(i);
+            Vector3d vx = new Vector3d(listAssembly.ElementAt(i).ArrElements.ElementAt(0).Length * 0.7, 0.0, 0.0);
+            Vector3d vy = new Vector3d(0.0, listAssembly.ElementAt(i).ArrElements.ElementAt(1).Length * 0.7, 0.0);
+            Vector3d vz = new Vector3d(0.0, 0.0, listAssembly.ElementAt(i).ArrElements.ElementAt(2).Length * 0.7);
+            listAssembly.ElementAt(i).XFsPos = listAssembly.ElementAt(i).Origin + vx;
+            listAssembly.ElementAt(i).YFsPos = listAssembly.ElementAt(i).Origin + vy;
+            listAssembly.ElementAt(i).ZFsPos = listAssembly.ElementAt(i).Origin + vz;
         }
         return listAssembly;
     }
@@ -609,7 +615,7 @@ public class Aggregate
     public Point3d xFsPoint(element element, Point3d origin)
     {
         Point3d Fspot = new Point3d();
-        Fspot.X = element.Length * 0.5+origin.X;
+        Fspot.X = element.Length * 0.5 + origin.X;
         Fspot.Y = origin.Y;
         Fspot.Z = origin.Z;
 
